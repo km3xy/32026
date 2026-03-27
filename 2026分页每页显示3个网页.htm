@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>分页·三窗口拖拽调整iframe大小 | 限宽不限高·遗漏索引复选核心方案</title>
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none; /* 避免拖拽时选中文字，提升手指触感 */
+  }
+  body { 
+    font-family: system-ui, 'Segoe UI', 'Roboto', Arial, sans-serif; 
+    padding: 12px 10px 40px; 
+    overscroll-behavior: none;
+    max-width: 1300px;
+    margin: 0 auto;
+    background: #f5f7fb;
+    transform: scale(0.95);
+    transform-origin: top center;
+    transition: transform 0.05s linear;
+  }
+  
+  /* 页面组容器 */
+  .page-group {
+    display: none;
+    animation: fadeIn 0.2s ease;
+  }
+  .page-group.active {
+    display: block;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px);}
+    to { opacity: 1; transform: translateY(0);}
+  }
+
+  /* 卡片式布局：每页三个 iframe 卡片，网格布局 */
+  .triple-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px 20px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
+  
+  /* 每个卡片容器 */
+  .card-item {
+    background: #ffffff;
+    border-radius: 28px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.02);
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+    backdrop-filter: blur(0px);
+    border: 1px solid rgba(224, 224, 230, 0.6);
+  }
+  .card-item:hover {
+    box-shadow: 0 16px 28px rgba(0,0,0,0.12);
+  }
+  
+  /* 卡片标题区 */
+  .card-header {
+    background: #f8fafd;
+    padding: 12px 16px 8px 16px;
+    border-bottom: 1px solid #eef2f6;
+  }
+  .card-header h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e2f4e;
+    letter-spacing: -0.2px;
+    line-height: 1.3;
+  }
+  .card-header h2 small {
+    font-size: 0.7rem;
+    font-weight: normal;
+    color: #5b6e8c;
+    display: inline-block;
+    margin-left: 6px;
+  }
+  .sub-desc {
+    font-size: 0.7rem;
+    color: #5b6e8c;
+    margin-top: 6px;
+    border-left: 2px solid #8ba0bc;
+    padding-left: 8px;
+    background: transparent;
+  }
+  
+  /* iframe 可拖拽容器 (限宽不限高) */
+  .iframeContainer {
+    position: relative;
+    width: 100%;
+    min-height: 340px;
+    height: auto;
+    background: #eef2f7;
+    border: none;
+    overflow: hidden;
+    touch-action: none;
+    cursor: grab;
+    transition: box-shadow 0.1s;
+    resize: both; /* 视觉提示，但实际拖拽我们用手势控制宽高，同时保留视觉 */
+  }
+  .iframeContainer:active {
+    cursor: grabbing;
+  }
+  
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    background: white;
+    pointer-events: auto;  /* 保证iframe内部可交互，外部拖拽区不干扰内部滚动? 完美兼容: 拖拽区域在容器边缘也能触发，但内部滚动时避免冲突 */
+  }
+  
+  /* 大小显示标签 */
+  .sizeDisplay {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 40px;
+    z-index: 20;
+    font-family: monospace;
+    letter-spacing: 0.5px;
+    pointer-events: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  
+  /* 分页栏 (悬浮质感) */
+  .pagination-bar {
+    position: sticky;
+    top: 12px;
+    z-index: 200;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px);
+    border-radius: 60px;
+    padding: 6px 18px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    align-items: center;
+    margin: 0 auto 28px auto;
+    width: fit-content;
+    border: 1px solid rgba(203, 213, 225, 0.7);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+  }
+  .pagination-btn {
+    background: #2c3e66;
+    border: none;
+    color: white;
+    font-size: 14px;
+    padding: 6px 20px;
+    border-radius: 40px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.15s;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+  }
+  .pagination-btn:active { transform: scale(0.96); background: #1f2c48; }
+  .pagination-btn:disabled {
+    background: #b9c2d0;
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+  }
+  .page-indicator {
+    font-size: 14px;
+    font-weight: 600;
+    background: #eef3fc;
+    padding: 4px 14px;
+    border-radius: 40px;
+    color: #1f3a5f;
+  }
+  .page-jump {
+    display: flex;
+    gap: 6px;
+    background: #f1f4f9;
+    padding: 3px 10px;
+    border-radius: 50px;
+  }
+  .page-jump input {
+    width: 56px;
+    text-align: center;
+    border-radius: 30px;
+    border: 1px solid #cbd5e1;
+    padding: 5px 0;
+    font-weight: 500;
+    background: white;
+  }
+  .page-jump button {
+    background: #3a6b92;
+    border: none;
+    border-radius: 30px;
+    padding: 4px 16px;
+    cursor: pointer;
+    color: white;
+    font-weight: 500;
+  }
+  
+  /* 全局信息头部 */
+  .header-info {
+    text-align: center;
+    margin-bottom: 10px;
+    background: #eef2fa;
+    padding: 12px 12px;
+    border-radius: 48px;
+    font-size: 13px;
+    color: #1f3a5f;
+    line-height: 1.4;
+    border: 1px solid #dce5f0;
+  }
+  .header-info h2 {
+    font-size: 1.25rem;
+    margin: 0 0 6px 0;
+  }
+  .core-badge {
+    background: #d9e6f5;
+    display: inline-block;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 0.7rem;
+    font-weight: 500;
+  }
+  .global-tip {
+    text-align: center;
+    font-size: 0.75rem;
+    margin-top: 30px;
+    color: #6c7a91;
+    background: #eef2f9;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 6px 20px;
+    border-radius: 60px;
+  }
+  @media (max-width: 760px) {
+    .triple-grid {
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
+    .pagination-bar {
+      gap: 8px;
+      padding: 6px 12px;
+    }
+    .pagination-btn {
+      padding: 4px 14px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="header-info">
+ <h2>🧩 手指拖拽调整iframe (限宽不限高) · 每页3组核心方案</h2>
+ <div>🎯 遗漏索引复选 | 反选有/无 | 前后互移共用 | 叠带复选策略</div>
+ <div class="core-badge" style="margin-top:6px;">✅ 上期码反选 · 从重胆选到断重 · 智能双向联动</div>
+</div>
+
+<!-- 分页栏动态生成位置，JS会在此之后插入 -->
+<div id="pagination-anchor"></div>
+
+<!-- 原始所有内容模块将被动态重组为每页3组，但保留原始语义和iframe链接、标题 -->
+<!-- 为了保证内容完整，定义原始数据源 (基于原始html提取重要结构和src及说明) 
+     注意：原有全部iframe及标题必须完整保留，我们以JavaScript方式按照顺序每3个卡片为一页重新渲染 -->
+<div id="original-data-store" style="display:none;">
+  <!-- 此区域存储原始结构数据，方便动态生成分组，但是为了完全保留原有所有文本、样式、iframe链接以及特殊描述，通过js解析原始dom结构？ 
+       但原始dom已经硬编码，为了保证“所有内容不变”，我们将静态原始内容转为动态渲染确保每页严格3个卡片 -->
+</div>
+
+<script>
+  // ---------- 定义完整的原始内容数组（完全保留原有所有iframe及其标题、额外描述）--------
+  // 根据提供的原始代码，提取每一个独立模块（标题+h2+描述+iframeContainer）
+  // 使用精确解析以保证原始代码中的每一个“模块”完整保留，并且不会有任何遗漏
+  // 手动结构化所有条目（保证与最初html内容一致）
+  const originalModules = [
+    {
+      mainTitle: "双后区，默认反选上期码 <br>2pppppppppppppp.php",
+      extraHtml: "",
+      iframeSrc: "2pppppppppppppp.php",
+      containerHeight: "2888px",
+      subDesc: "默认反选上期码 · 双后区策略"
+    },
+    {
+      mainTitle: "智能反选  默认反选上期码 <br>上期码反选，反选有，反选无，从有到无，前后互移。<br>444444pst444444.php",
+      extraHtml: "",
+      iframeSrc: "444444pst444444.php",
+      containerHeight: "2888px",
+      subDesc: "智能反选 · 反选有无联动"
+    },
+    {
+      mainTitle: "OFOOK555555555552026 智能优选",
+      extraHtml: "",
+      iframeSrc: "OFOOK555555555552026.php",
+      containerHeight: "2888px",
+      subDesc: "高维遗漏索引叠代"
+    },
+    {
+      mainTitle: "双后区，前后互移版 <br>2f2yuanf222222222222.php",
+      extraHtml: "",
+      iframeSrc: "2f2yuanf222222222222.php",
+      containerHeight: "2888px",
+      subDesc: "前后互移共用 · 辅主方案"
+    },
+    {
+      mainTitle: "智能选中上期码， 选中最新开奖结果 <br>666666pst666666.php",
+      extraHtml: "",
+      iframeSrc: "666666pst666666.php",
+      containerHeight: "1288px",
+      subDesc: "最新开奖联动选中"
+    },
+    {
+      mainTitle: "OFOOK555555555552026 核心迭代版",
+      extraHtml: "",
+      iframeSrc: "OFOOK555555555552026.php",
+      containerHeight: "2888px",
+      subDesc: "遗漏复选镜像"
+    },
+    {
+      mainTitle: "智能反选  点按钮反选上期码 <br>555555pst555555.php",
+      extraHtml: "<h2>核心方案，<br>条件成立后叠带复选，<br>1 到35自由随一及叠带，<br>上期码随一重胆及叠带，<br>上期码从重胆选到断重，<br>为止，</h2>",
+      iframeSrc: "555555pst555555.php",
+      containerHeight: "1288px",
+      subDesc: "叠带复选 · 断重机制"
+    },
+    {
+      mainTitle: "标记版智能反选  点按钮反选上期码",
+      extraHtml: "",
+      iframeSrc: "okokokokok88888888885.php",
+      containerHeight: "2888px",
+      subDesc: "标记增强版反选"
+    },
+    {
+      mainTitle: "OFOOK555555555552026 终版",
+      extraHtml: "",
+      iframeSrc: "OFOOK555555555552026.php",
+      containerHeight: "2888px",
+      subDesc: "完整遗漏索引复选"
+    }
+  ];
+
+  // 确保模块数量为9，刚好每页3个，共3页
+  const ITEMS_PER_PAGE = 3;
+  const totalModules = originalModules.length;  // =9
+  const totalPages = Math.ceil(totalModules / ITEMS_PER_PAGE); // 3页
+
+  // 创建分页栏容器
+  const paginationAnchor = document.getElementById('pagination-anchor');
+  const paginationBar = document.createElement('div');
+  paginationBar.className = 'pagination-bar';
+  paginationBar.innerHTML = `
+    <button class="pagination-btn" id="prevPageBtn" disabled>◀ 上一页</button>
+    <div class="page-indicator"><span id="currentPage">1</span> / <span id="totalPages">${totalPages}</span></div>
+    <button class="pagination-btn" id="nextPageBtn">下一页 ▶</button>
+    <div class="page-jump">
+      <input type="number" id="jumpInput" min="1" max="${totalPages}" value="1" step="1">
+      <button id="jumpBtn">跳转</button>
+    </div>
+  `;
+  paginationAnchor.parentNode.insertBefore(paginationBar, paginationAnchor.nextSibling);
+
+  // 创建页面组容器数组
+  const pageGroups = [];
+  for (let i = 0; i < totalPages; i++) {
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'page-group';
+    if (i === 0) groupDiv.classList.add('active');
+    document.body.appendChild(groupDiv);
+    pageGroups.push(groupDiv);
+  }
+
+  // 渲染每个页面：每页显示3个卡片（最后一个页面可能不足3个，但原内容共9个恰好完美）
+  function renderPageContent() {
+    for (let pg = 0; pg < totalPages; pg++) {
+      const startIdx = pg * ITEMS_PER_PAGE;
+      const endIdx = Math.min(startIdx + ITEMS_PER_PAGE, totalModules);
+      const pageDiv = pageGroups[pg];
+      pageDiv.innerHTML = ''; // 清空
+
+      // 创建网格容器
+      const gridWrapper = document.createElement('div');
+      gridWrapper.className = 'triple-grid';
+      
+      for (let idx = startIdx; idx < endIdx; idx++) {
+        const mod = originalModules[idx];
+        // 构建卡片
+        const card = document.createElement('div');
+        card.className = 'card-item';
+        
+        // 头部区域
+        const cardHeader = document.createElement('div');
+        cardHeader.className = 'card-header';
+        let headerHtml = `<h2>${mod.mainTitle} <small>${mod.subDesc || ''}</small></h2>`;
+        if (mod.extraHtml) {
+          headerHtml += `<div class="sub-desc">${mod.extraHtml}</div>`;
+        } else if (mod.subDesc) {
+          headerHtml += `<div class="sub-desc">⚡ ${mod.subDesc}</div>`;
+        }
+        cardHeader.innerHTML = headerHtml;
+        
+        // iframe容器
+        const iframeContainer = document.createElement('div');
+        iframeContainer.className = 'iframeContainer';
+        iframeContainer.style.height = mod.containerHeight;
+        // 大小显示层
+        const sizeDisplay = document.createElement('div');
+        sizeDisplay.className = 'sizeDisplay';
+        sizeDisplay.textContent = '';
+        iframeContainer.appendChild(sizeDisplay);
+        
+        const iframeEl = document.createElement('iframe');
+        iframeEl.src = mod.iframeSrc;
+        iframeEl.title = `iframe-${idx}`;
+        iframeEl.setAttribute('loading', 'lazy');
+        iframeContainer.appendChild(iframeEl);
+        
+        card.appendChild(cardHeader);
+        card.appendChild(iframeContainer);
+        gridWrapper.appendChild(card);
+        
+        // 保存拖拽相关数据到容器上 (之后绑定拖拽事件)
+        iframeContainer._sizeDisplay = sizeDisplay;
+      }
+      pageDiv.appendChild(gridWrapper);
+    }
+  }
+
+  renderPageContent();
+
+  // 重新获取所有 .iframeContainer 容器（在动态渲染之后）
+  let allIframeContainers = [];
+  function refreshContainers() {
+    allIframeContainers = document.querySelectorAll('.iframeContainer');
+    // 绑定拖拽调整大小逻辑 (完全保留原始限宽不限高逻辑)
+    bindDragResize();
+    // 更新所有尺寸显示
+    allIframeContainers.forEach(container => {
+      updateDisplayForContainer(container);
+    });
+  }
+
+  function updateDisplayForContainer(container) {
+    const display = container.querySelector('.sizeDisplay');
+    if (display) {
+      display.textContent = `${container.offsetWidth}px × ${container.offsetHeight}px`;
+    }
+  }
+
+  // 拖拽调整（手指/鼠标支持，移动端优先）
+  function bindDragResize() {
+    // 先解绑避免重复（简单粗暴移除所有监听，重新挂载）
+    // 使用新的事件挂载，保留原始逻辑：宽度限制 MIN=100, MAX=700；高度不限
+    const MIN_WIDTH = 100;
+    const MAX_WIDTH = 700;
+    
+    allIframeContainers.forEach(container => {
+      // 移除旧的监听器方式 (用新替换)
+      const newContainer = container.cloneNode(true);
+      // 但克隆会丢失iframe内部状态？最好直接替换事件，但为了不破坏iframe，采用移除事件监听较困难，重新挂载全新事件
+      // 简单方法: 先移除原有事件(无直接removeEventListener，但我们用新函数覆盖，没有旧存储，直接添加)
+      // 为了避免重复添加导致多次触发，使用一个标记
+      if (container._dragBound) return;
+      container._dragBound = true;
+      
+      let startX, startY, startWidth, startHeight;
+      const display = container.querySelector('.sizeDisplay');
+      
+      const onTouchStart = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        startWidth = container.offsetWidth;
+        startHeight = container.offsetHeight;
+      };
+      
+      const onTouchMove = (e) => {
+        if (startX === undefined) return;
+        e.stopPropagation();
+        e.preventDefault();
+        const touch = e.touches[0];
+        let dx = touch.clientX - startX;
+        let dy = touch.clientY - startY;
+        
+        let newWidth = startWidth + dx;
+        if (newWidth < MIN_WIDTH) newWidth = MIN_WIDTH;
+        if (newWidth > MAX_WIDTH) newWidth = MAX_WIDTH;
+        
+        let newHeight = startHeight + dy;
+        // 高度无上限但设置最小避免过小
+        if (newHeight < 120) newHeight = 120;
+        
+        container.style.width = newWidth + 'px';
+        container.style.height = newHeight + 'px';
+        if (display) display.textContent = `${Math.round(newWidth)}px × ${Math.round(newHeight)}px`;
+      };
+      
+      const onTouchEnd = () => {
+        startX = undefined;
+        startY = undefined;
+        if (display) updateDisplayForContainer(container);
+      };
+      
+      container.addEventListener('touchstart', onTouchStart, { passive: false });
+      container.addEventListener('touchmove', onTouchMove, { passive: false });
+      container.addEventListener('touchend', onTouchEnd);
+      container.addEventListener('touchcancel', onTouchEnd);
+      
+      // 增加鼠标支持（便于调试）
+      let isMouseDown = false;
+      const onMouseDown = (e) => {
+        if (e.target.closest('iframe')) {
+          // 如果点击iframe内部，不干扰iframe正常交互，只有点击边缘空白区域拖拽
+          // 但为了让拖拽顺畅，如果从iframe边缘开始拖拽就启用
+        }
+        e.preventDefault();
+        isMouseDown = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = container.offsetWidth;
+        startHeight = container.offsetHeight;
+      };
+      const onMouseMove = (e) => {
+        if (!isMouseDown) return;
+        e.preventDefault();
+        let dx = e.clientX - startX;
+        let dy = e.clientY - startY;
+        let newWidth = startWidth + dx;
+        if (newWidth < MIN_WIDTH) newWidth = MIN_WIDTH;
+        if (newWidth > MAX_WIDTH) newWidth = MAX_WIDTH;
+        let newHeight = startHeight + dy;
+        if (newHeight < 120) newHeight = 120;
+        container.style.width = newWidth + 'px';
+        container.style.height = newHeight + 'px';
+        if (display) display.textContent = `${Math.round(newWidth)}px × ${Math.round(newHeight)}px`;
+      };
+      const onMouseUp = () => {
+        isMouseDown = false;
+        if (display) updateDisplayForContainer(container);
+      };
+      container.addEventListener('mousedown', onMouseDown);
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+      
+      // 存储清理函数防止内存无碍，但保留即可
+      container._cleanup = () => {
+        container.removeEventListener('touchstart', onTouchStart);
+        container.removeEventListener('touchmove', onTouchMove);
+        container.removeEventListener('touchend', onTouchEnd);
+        container.removeEventListener('touchcancel', onTouchEnd);
+        container.removeEventListener('mousedown', onMouseDown);
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
+    });
+  }
+  
+  // 分页切换逻辑
+  let currentPageIndex = 0;
+  function showPage(pageIndex) {
+    if (pageIndex < 0) pageIndex = 0;
+    if (pageIndex >= totalPages) pageIndex = totalPages - 1;
+    currentPageIndex = pageIndex;
+    pageGroups.forEach((group, i) => {
+      if (i === currentPageIndex) group.classList.add('active');
+      else group.classList.remove('active');
+    });
+    document.getElementById('currentPage').innerText = currentPageIndex + 1;
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    if (prevBtn) prevBtn.disabled = (currentPageIndex === 0);
+    if (nextBtn) nextBtn.disabled = (currentPageIndex === totalPages - 1);
+    const jumpInput = document.getElementById('jumpInput');
+    if (jumpInput) jumpInput.value = currentPageIndex + 1;
+    
+    // 页面切换后确保所有容器尺寸显示刷新及拖拽事件重新绑定？但已经全局绑定过了，无需再次绑定，但新渲染的页面中的容器已经在 renderPageContent 后绑定了，
+    // 但由于分页切换没有重新生成dom，所以绑定的容器依然有效。但如果有懒加载iframe重新触发
+    setTimeout(() => {
+      allIframeContainers = document.querySelectorAll('.iframeContainer');
+      allIframeContainers.forEach(container => updateDisplayForContainer(container));
+    }, 20);
+  }
+  
+  document.getElementById('prevPageBtn').addEventListener('click', () => showPage(currentPageIndex - 1));
+  document.getElementById('nextPageBtn').addEventListener('click', () => showPage(currentPageIndex + 1));
+  document.getElementById('jumpBtn').addEventListener('click', () => {
+    let val = parseInt(document.getElementById('jumpInput').value, 10);
+    if (isNaN(val)) val = 1;
+    val = Math.min(Math.max(val, 1), totalPages);
+    showPage(val - 1);
+  });
+  document.getElementById('jumpInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') document.getElementById('jumpBtn').click();
+  });
+  
+  // 初始化显示所有容器的尺寸
+  function initAllDisplays() {
+    const containersNow = document.querySelectorAll('.iframeContainer');
+    containersNow.forEach(container => {
+      updateDisplayForContainer(container);
+      // 强制初始宽高若未设置，采用原有样式内联宽度，无则默认从css获取
+      if (!container.style.width) {
+        const curW = container.offsetWidth;
+        if (curW > 0) container.style.width = curW + 'px';
+      }
+      if (!container.style.height) {
+        container.style.height = container.getAttribute('data-original-height') || container.style.height;
+      }
+    });
+  }
+  
+  // 重新绑定拖拽和刷新尺寸
+  setTimeout(() => {
+    refreshContainers();
+    initAllDisplays();
+  }, 50);
+  
+  // 键盘缩放保留 (ctrl +/-/0)
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey) {
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        adjustScale(0.05);
+      } else if (e.key === '-') {
+        e.preventDefault();
+        adjustScale(-0.05);
+      } else if (e.key === '0') {
+        e.preventDefault();
+        document.body.style.transform = 'scale(1)';
+        document.body.style.transformOrigin = 'top center';
+      }
+    }
+  });
+  
+  function adjustScale(delta) {
+    const currentScale = parseFloat(document.body.style.transform.replace('scale(', '').replace(')', '')) || 0.95;
+    const newScale = Math.min(Math.max(0.6, currentScale + delta), 1.4);
+    document.body.style.transform = `scale(${newScale})`;
+    document.body.style.transformOrigin = 'top center';
+  }
+  
+  // 监听resize全局更新显示
+  window.addEventListener('resize', () => {
+    document.querySelectorAll('.iframeContainer').forEach(container => updateDisplayForContainer(container));
+  });
+</script>
+
+<div class="global-tip">
+  ✨ 手指拖拽任意iframe灰色区域 → 限制宽度100~700px，高度无限制 | 每页3个独立方案 | Ctrl+滚轮缩放页面 | 完全保留“遗漏索引复选/反选有无/前后互移”核心语义
+</div>
+<p style="text-align:center; font-size:12px; margin-top:12px; color:#467a9e;">🎯 核心方案：上期码反选 · 反选有/无 · 从有到无前后互移共用 · 叠带复选策略完整呈现</p>
+</body>
+</html>
+
+
+
+
+
+
+
