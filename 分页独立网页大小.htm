@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>手指拖拽调整 iframe 大小（限宽不限高）中意码遗漏索引复选，核心方案，遗漏索引复选</title>
+<style>
+  body { 
+    font-family: Arial, sans-serif; 
+    padding: 10px; 
+    overscroll-behavior: none;
+    max-width: 1200px;
+    margin: 0 auto;
+    transform: scale(0.95);
+    transform-origin: top center;
+    width: 100%;
+  }
+  
+  .iframeContainer {
+    position: relative;
+    width: 100%;
+    max-width: 700px; /* 减小最大宽度 */
+    height: 400px;
+    border: 1px solid #ccc;
+    overflow: hidden;
+    touch-action: none;
+    margin: 0 auto 15px; /* 居中并减少底部间距 */
+  }
+  
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+  
+  .sizeDisplay {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    padding: 2px 5px;
+    font-size: 12px;
+    border-radius: 3px;
+    z-index: 10;
+  }
+  
+  h2 {
+    font-size: 18px; /* 减小标题字号 */
+    margin: 10px 0; /* 减少标题间距 */
+    text-align: center;
+  }
+  
+  p {
+    font-size: 14px;
+    text-align: center;
+  }
+  
+  .header-info {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #555;
+  }
+
+  /* 新增：分页控制栏样式 */
+  .pagination-bar {
+    position: sticky;
+    top: 10px;
+    z-index: 100;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(8px);
+    border-radius: 40px;
+    padding: 8px 16px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    align-items: center;
+    margin: 0 auto 20px auto;
+    width: fit-content;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .pagination-btn {
+    background: #2c3e66;
+    border: none;
+    color: white;
+    font-size: 14px;
+    padding: 5px 16px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .pagination-btn:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+  }
+  .page-indicator {
+    font-size: 14px;
+    font-weight: bold;
+    background: #eee;
+    padding: 4px 12px;
+    border-radius: 30px;
+  }
+  .page-jump {
+    display: flex;
+    gap: 5px;
+  }
+  .page-jump input {
+    width: 50px;
+    text-align: center;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    padding: 4px;
+  }
+  .page-jump button {
+    background: #3a6b92;
+    border: none;
+    border-radius: 20px;
+    padding: 4px 12px;
+    cursor: pointer;
+    color: white;
+  }
+
+  /* 分页容器：每个页面独立显示/隐藏 */
+  .page-group {
+    display: none;
+  }
+  .page-group.active {
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<div class="header-info">
+ <h2>手指拖拽调整 iframe（限宽不限高）</h2>
+ 
+   
+3月2026核心方案，反选有，反选无<br>
+辅主方案，前后互移共用<br>
+
+上期码反选，反选有，反选无，从有到无<br>
+
+反选有，/*前后共移共用，*/   <br>
+反选无，/*前后共移共用 ，*/  <br>
+
+从有到无，前后共移共用  <br>
+
+主方案，反选有，反选无，<br>
+
+辅主方案，前后互移共用，<br>
+
+</div>
+
+<!-- 以下为原始所有内容，我们将通过 JavaScript 动态分组为页面 -->
+<!-- 原始内容开始（保持不变） -->
+
+<h2>双后区，默认反选上期码 <br>
+2pppppppppppppp.php</h2>
+<div class="iframeContainer" style="height: 2888px;">
+  <div class="sizeDisplay"></div>
+  <iframe src="2pppppppppppppp.php"></iframe>
+</div>
+
+<h2>智能反选  默认反选上期码 <br>
+上期码反选，反选有，反选无，从有到无，前后互移。<br>
+444444pst444444.php</h2>
+<div class="iframeContainer" style="height: 2888px;">
+  <div class="sizeDisplay"></div>
+  <iframe src="444444pst444444.php"></iframe>
+</div>
+
+<div class="iframeContainer" style="height: 2888px;">
+  <div class="sizeDisplay"></div>
+  <iframe src="OFOOK555555555552026.php"></iframe>
+</div>
+
+<h2>双后区，前后互移版 <br>
+2f2yuanf222222222222.php</h2>
+<div class="iframeContainer" style="height: 2888px;">
+  <div class="sizeDisplay"></div>
+  <iframe src="2f2yuanf222222222222.php"></iframe>
+</div>
+
+<h2>智能选中上期码， 选中最新开奖结果 <br>
+666666pst666666.php</h2>
+<div class="iframeContainer" style="height: 1288px;">
+  <div class="sizeDisplay"></div>
+  <iframe src="666666pst666666.php"></iframe>
+</div>
+
+<div class="iframeContainer" style="height: 2888px;">
+  <div class="sizeDisplay"></div>
+  <iframe src="OFOOK555555555552026.php"></iframe>
+</div>
+
+<h2>智能反选  点按钮反选上期码 <br>
+555555pst555555.php</h2>
+<h2>核心方案，<br>条件成立后叠带复选，<br>1 到35自由随一及叠带，<br>上期码随一重胆及叠带，<br>上期码从重胆选到断重，<br>为止，</h2>
+<div class="iframeContainer" style="height: 1288px;">
+  <div class="sizeDisplay"></div>
+  <iframe src="555555pst555555.php"></iframe>
+</div>
+
+<h2>标记版智能反选  点按钮反选上期码</h2>
+<div class="iframeContainer" style="height: 2888px;">
+  <div class="sizeDisplay"></div>
+  <iframe src="okokokokok88888888885.php"></iframe>
+</div>
+
+<div class="iframeContainer" style="height: 2888px;">
+  <div class="sizeDisplay"></div>
+  <iframe src="OFOOK555555555552026.php"></iframe>
+</div>
+
+<!-- 原始内容结束 -->
+
+<script>
+// 分页功能：将每个 iframeContainer 及其前面的相关元素（标题等）组合成一个页面组
+// 注意：保留原有拖拽功能不变（原脚本在页面末尾会执行，但我们要在分组后确保拖拽仍绑定在原始容器上）
+// 这里先执行分组，然后再执行原有的拖拽脚本（但原有脚本会在页面加载后自动运行，我们只需保证分组不影响容器的存在）
+
+// 获取所有 iframeContainer
+const containers = document.querySelectorAll('.iframeContainer');
+const totalPages = containers.length;
+
+if (totalPages > 0) {
+  // 创建分页控制栏
+  const paginationBar = document.createElement('div');
+  paginationBar.className = 'pagination-bar';
+  paginationBar.innerHTML = `
+    <button class="pagination-btn" id="prevPageBtn" disabled>◀ 上一页</button>
+    <div class="page-indicator"><span id="currentPage">1</span> / <span id="totalPages">${totalPages}</span></div>
+    <button class="pagination-btn" id="nextPageBtn">下一页 ▶</button>
+    <div class="page-jump">
+      <input type="number" id="jumpInput" min="1" max="${totalPages}" value="1">
+      <button id="jumpBtn">跳转</button>
+    </div>
+  `;
+  // 插入到 header-info 后面
+  const header = document.querySelector('.header-info');
+  header.insertAdjacentElement('afterend', paginationBar);
+
+  // 将每个 iframeContainer 及其前面的元素（直到上一个 iframeContainer 或开始）组成一个页面组
+  let currentGroup = [];
+  const groups = [];
+  let currentGroupElements = [];
+
+  // 遍历 body 的直接子元素（按顺序）
+  const bodyChildren = Array.from(document.body.children);
+  // 跳过已经插入的分页栏和 header-info，只处理后面的内容
+  let startIndex = bodyChildren.indexOf(header) + 1;
+  if (paginationBar && bodyChildren.indexOf(paginationBar) !== -1) startIndex = bodyChildren.indexOf(paginationBar) + 1;
+  const contentNodes = bodyChildren.slice(startIndex);
+
+  for (let i = 0; i < contentNodes.length; i++) {
+    const node = contentNodes[i];
+    currentGroupElements.push(node);
+    if (node.classList && node.classList.contains('iframeContainer')) {
+      // 遇到 iframeContainer，将当前积累的节点作为一个页面组
+      groups.push([...currentGroupElements]);
+      currentGroupElements = [];
+    }
+  }
+  // 如果最后还有未配对的（理论上不应该），忽略
+
+  // 确保组数等于 iframeContainer 数量
+  if (groups.length !== totalPages) {
+    console.warn('分组数量不匹配，使用后备方案');
+    // 后备：每个 iframeContainer 单独一组，但会丢失前面的标题，不过仍可工作
+    groups.length = 0;
+    containers.forEach(container => {
+      groups.push([container]);
+    });
+  }
+
+  // 为每个组创建包裹容器，并将原节点移动进去
+  const pageGroups = [];
+  groups.forEach((elements, idx) => {
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'page-group';
+    if (idx === 0) groupDiv.classList.add('active');
+    // 将元素移动到 groupDiv 中
+    elements.forEach(el => {
+      groupDiv.appendChild(el);
+    });
+    // 将 groupDiv 插入到分页栏之后（或 body 末尾）
+    document.body.insertBefore(groupDiv, document.body.lastChild); // 放在末尾但尽量在脚本之前
+    pageGroups.push(groupDiv);
+  });
+
+  // 移除原来的内容节点（已经被移动，无需额外操作）
+
+  // 分页切换逻辑
+  let currentPage = 0; // 0-index
+
+  function showPage(pageIndex) {
+    if (pageIndex < 0) pageIndex = 0;
+    if (pageIndex >= totalPages) pageIndex = totalPages - 1;
+    currentPage = pageIndex;
+    pageGroups.forEach((group, i) => {
+      if (i === currentPage) group.classList.add('active');
+      else group.classList.remove('active');
+    });
+    document.getElementById('currentPage').innerText = currentPage + 1;
+    document.getElementById('prevPageBtn').disabled = (currentPage === 0);
+    document.getElementById('nextPageBtn').disabled = (currentPage === totalPages - 1);
+    document.getElementById('jumpInput').value = currentPage + 1;
+  }
+
+  document.getElementById('prevPageBtn').addEventListener('click', () => showPage(currentPage - 1));
+  document.getElementById('nextPageBtn').addEventListener('click', () => showPage(currentPage + 1));
+  document.getElementById('jumpBtn').addEventListener('click', () => {
+    let val = parseInt(document.getElementById('jumpInput').value, 10);
+    if (isNaN(val)) val = 1;
+    val = Math.min(Math.max(val, 1), totalPages);
+    showPage(val - 1);
+  });
+  document.getElementById('jumpInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') document.getElementById('jumpBtn').click();
+  });
+}
+
+// 以下为原始拖拽脚本（完全保留，未做任何修改）
+// 注意：由于容器被移动到了 page-group 内，但依然是 .iframeContainer，querySelectorAll 仍能获取到
+const MIN_WIDTH = 100;   // 最小宽度
+const MAX_WIDTH = 700;   // 最大宽度（与CSS保持一致）
+
+const containers2 = document.querySelectorAll('.iframeContainer'); // 重新获取（已在分组中）
+
+containers2.forEach(container => {
+    const display = container.querySelector('.sizeDisplay');
+    let startX, startY, startWidth, startHeight;
+
+    function updateDisplay() {
+        display.textContent = `${container.offsetWidth}px × ${container.offsetHeight}px`;
+    }
+
+    updateDisplay();
+
+    container.addEventListener('touchstart', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        startWidth = container.offsetWidth;
+        startHeight = container.offsetHeight;
+    }, { passive: false });
+
+    container.addEventListener('touchmove', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        const touch = e.touches[0];
+        let dx = touch.clientX - startX;
+        let dy = touch.clientY - startY;
+
+        // 宽度限制
+        let newWidth = startWidth + dx;
+        if (newWidth < MIN_WIDTH) newWidth = MIN_WIDTH;
+        if (newWidth > MAX_WIDTH) newWidth = MAX_WIDTH;
+
+        // 高度不限
+        let newHeight = startHeight + dy;
+
+        container.style.width = newWidth + 'px';
+        container.style.height = newHeight + 'px';
+        updateDisplay();
+    }, { passive: false });
+});
+
+// 添加键盘快捷键调整缩放
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey) {
+        if (e.key === '+') {
+            e.preventDefault();
+            adjustScale(0.05);
+        } else if (e.key === '-') {
+            e.preventDefault();
+            adjustScale(-0.05);
+        } else if (e.key === '0') {
+            e.preventDefault();
+            document.body.style.transform = 'scale(1)';
+            document.body.style.transformOrigin = 'top center';
+        }
+    }
+});
+
+function adjustScale(delta) {
+    const currentScale = parseFloat(document.body.style.transform.replace('scale(', '').replace(')', '')) || 0.95;
+    const newScale = Math.min(Math.max(0.5, currentScale + delta), 1.5);
+    document.body.style.transform = `scale(${newScale})`;
+    document.body.style.transformOrigin = 'top center';
+}
+</script>
+
+<p>拖拽 iframe 区域调整宽高，宽度受限制，高度自由，左上角显示实时宽高</p>
+<p>提示：使用 Ctrl++ 放大，Ctrl+- 缩小，Ctrl+0 恢复默认大小</p>
+
+</body>
+</html>
