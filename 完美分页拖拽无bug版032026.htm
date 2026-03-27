@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iframe 分页拖拽升级版（超紧凑标题美化）</title>
+
+<style>
+body { 
+  font-family: Arial, sans-serif; 
+  padding: 10px; 
+  overscroll-behavior: none;
+  max-width: 1200px;
+  margin: 0 auto;
+  transform: scale(0.95);
+  transform-origin: top center;
+}
+
+.iframeContainer {
+  position: relative;
+  width: 400px;           /* 默认宽度改为400px */
+  height: 2888px;         /* 高度保持原样 */
+  border: 1px solid #ccc;
+  overflow: hidden;
+  touch-action: none;
+  margin: 0 auto 15px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 12px;
+}
+
+.sizeDisplay {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  padding: 2px 5px;
+  font-size: 12px;
+  border-radius: 3px;
+  z-index: 10;
+}
+
+/* ===== 超紧凑标题样式 ===== */
+.h2-card.compact {
+  background: #fff8f0;
+  padding: 6px 10px;      
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  font-size: 13px;        
+  line-height: 1.2;       
+  color: #ff5722;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.h2-card.compact .row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 2px;     
+  gap: 6px;
+}
+
+.h2-card.compact .row span:first-child {
+  min-width: 80px;        
+  font-weight: 600;
+}
+
+.h2-card.compact .row span:last-child {
+  flex: 1;
+}
+
+/* ===== 分页样式 ===== */
+.page { display: none; }
+.page.active { display: block; }
+
+.pagination {
+  text-align: center;
+  margin: 15px 0;
+}
+
+.pagination button {
+  padding: 6px 12px;
+  margin: 3px;
+  border: none;
+  background: #007bff;
+  color: #fff;
+  border-radius: 4px;
+}
+
+.pagination button.active {
+  background: #ff5722;
+}
+</style>
+</head>
+
+<body>
+
+<h2>iframe 拖拽 + 分页系统（每页 3 个 iframe + 超紧凑标题）</h2>
+
+<div class="pagination" id="pagination"></div>
+
+<!-- ===== 第1页 ===== -->
+<div class="page active">
+  <h2 class="h2-card compact">
+    <div class="row">
+      <span>🌟 核心方案：</span><span>反选有 / 反选无</span>
+      <span>🟠 辅主方案：</span><span>前后互移共用</span>
+    </div>
+    <div class="row">
+      <span>📌 上期码反选：</span><span>反选有 / 反选无 / 从有到无</span>
+    </div>
+    <div class="row">
+      <span>✅ 反选有：</span><span>/*前后共移共用*/</span>
+      <span>✅反选无：</span><span>/*前后共移共用*/</span>
+    </div>
+    <div class="row">
+      <span>🔄 从有到无：</span><span>前后共移共用</span>
+      <span>🎯 主方案：</span><span>反选有 / 反选无</span>
+    </div>
+    <div class="row">
+      <span>🟢 辅主方案：</span><span>前后互移共用</span>
+    </div>
+  </h2>
+
+  <div class="iframeContainer">
+    <div class="sizeDisplay"></div>
+    <iframe src="2pppppppppppppp.php"></iframe>
+  </div>
+  <div class="iframeContainer">
+    <div class="sizeDisplay"></div>
+    <iframe src="444444pst444444.php"></iframe>
+  </div>
+  <div class="iframeContainer">
+    <div class="sizeDisplay"></div>
+    <iframe src="OFOOK555555555552026.php"></iframe>
+  </div>
+</div>
+
+<!-- ===== 第2页 ===== -->
+<div class="page">
+  <h2 class="h2-card compact">
+    <div class="row">
+      <span>🌟 第2页：</span><span>前后互移版 + 最新开奖选中</span>
+      <span>📌 方案A：</span><span>前区互移</span>
+    </div>
+    <div class="row">
+      <span>📌 方案B：</span><span>后区互移</span>
+      <span>✅ 核心选号：</span><span>最新开奖选中</span>
+    </div>
+    <div class="row">
+      <span>🟢 辅助方案：</span><span>可随机组合</span>
+    </div>
+  </h2>
+
+  <div class="iframeContainer">
+    <div class="sizeDisplay"></div>
+    <iframe src="2f2yuanf222222222222.php"></iframe>
+  </div>
+  <div class="iframeContainer" style="height:1288px;">
+    <div class="sizeDisplay"></div>
+    <iframe src="666666pst666666.php"></iframe>
+  </div>
+  <div class="iframeContainer" style="height:1288px;">
+    <div class="sizeDisplay"></div>
+    <iframe src="OFOOK555555555552026.php"></iframe>
+  </div>
+</div>
+
+<!-- ===== 第3页 ===== -->
+<div class="page">
+  <h2 class="h2-card compact">
+    <div class="row">
+      <span>🌟 第3页：</span><span>标记版智能反选与双后区</span>
+      <span>✅ 核心功能：</span><span>智能反选</span>
+    </div>
+    <div class="row">
+      <span>🟠 后区玩法：</span><span>双后区处理</span>
+      <span>📌 主方案：</span><span>辅助方案共用</span>
+    </div>
+    <div class="row">
+      <span>🔄 方案组合：</span><span>前后互移</span>
+    </div>
+  </h2>
+
+  <div class="iframeContainer">
+    <div class="sizeDisplay"></div>
+    <iframe src="okokokokok88888888885.php"></iframe>
+  </div>
+  <div class="iframeContainer">
+    <div class="sizeDisplay"></div>
+    <iframe src="OFOOK555555555552026.php"></iframe>
+  </div>
+  <div class="iframeContainer">
+    <div class="sizeDisplay"></div>
+    <iframe src="2pppppppppppppp.php"></iframe>
+  </div>
+</div>
+
+<script>
+// ===== iframe 拖拽 =====
+const MIN_WIDTH = 100;
+const MAX_WIDTH = 700;
+
+document.querySelectorAll('.iframeContainer').forEach(container => {
+  const display = container.querySelector('.sizeDisplay');
+  let startX, startY, startWidth, startHeight;
+
+  function update() {
+    display.textContent = container.offsetWidth + ' × ' + container.offsetHeight;
+  }
+  update();
+
+  container.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    startX = t.clientX;
+    startY = t.clientY;
+    startWidth = container.offsetWidth;
+    startHeight = container.offsetHeight;
+  }, { passive:false });
+
+  container.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    let dx = t.clientX - startX;
+    let dy = t.clientY - startY;
+
+    let w = Math.min(Math.max(startWidth + dx, MIN_WIDTH), MAX_WIDTH);
+    let h = startHeight + dy;
+
+    container.style.width = w + 'px';
+    container.style.height = h + 'px';
+    update();
+  }, { passive:false });
+});
+
+// ===== 分页 =====
+const pages = document.querySelectorAll('.page');
+const pagination = document.getElementById('pagination');
+let current = 0;
+
+pages.forEach((_, i) => {
+  let btn = document.createElement('button');
+  btn.innerText = i + 1;
+
+  if(i === 0) btn.classList.add('active');
+
+  btn.onclick = () => {
+    pages[current].classList.remove('active');
+    pagination.children[current].classList.remove('active');
+
+    current = i;
+
+    pages[current].classList.add('active');
+    pagination.children[current].classList.add('active');
+
+    window.scrollTo(0,0);
+  };
+
+  pagination.appendChild(btn);
+});
+
+// ===== 缩放 =====
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey) {
+    if (e.key === '+') scale(0.05);
+    if (e.key === '-') scale(-0.05);
+    if (e.key === '0') document.body.style.transform = 'scale(1)';
+  }
+});
+
+function scale(d){
+  let s = parseFloat(document.body.style.transform.replace('scale(','').replace(')','')) || 0.95;
+  s = Math.min(Math.max(0.5, s + d), 1.5);
+  document.body.style.transform = 'scale(' + s + ')';
+}
+</script>
+
+</body>
+</html>
+
+
+
+
